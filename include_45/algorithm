@@ -56,6 +56,11 @@
 #ifndef _GLIBCXX_ALGORITHM
 #define _GLIBCXX_ALGORITHM 1
 
+#include "thrust/host_vector.h"
+#include "thrust/device_vector.h"
+#include "thrust/find.h"
+#include "thrust/sort.h"
+
 #pragma GCC system_header
 
 #include <utility> // UK-300.

@@ -144,6 +144,37 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       return __first;
     }
 
+#ifdef STL_ENABLE_GPU
+  template<typename _RandomAccessIterator, typename _Tp>
+    _RandomAccessIterator
+    __gpu_find(_RandomAccessIterator __first, _RandomAccessIterator __last,
+	   const _Tp& __val)
+    {
+      static bool __cpy = true;
+      unsigned long __total_size = (__last - __first);
+      
+      static thrust::device_vector<_Tp> __device(__total_size);
+      
+      if(__cpy){
+	thrust::host_vector<_Tp> __host(__total_size);
+	unsigned long __c = 0;
+
+	for(_RandomAccessIterator __it = __first; __it != __last; ++__it){
+	  __host[__c] = *__it;
+	  ++__c;
+	}
+	thrust::copy(__host.begin(),__host.end(),__device.begin());
+	__cpy = false;
+      }
+      typename thrust::device_vector<_Tp>::iterator __loc = 
+	thrust::find(__device.begin(),__device.end(),__val);
+
+      unsigned long __dist = thrust::distance(__device.begin(),__loc);
+
+      return __first + __dist;
+    }
+#endif
+
   /// This is an overload used by find() for the RAI case.
   template<typename _RandomAccessIterator, typename _Tp>
     _RandomAccessIterator
@@ -153,6 +184,11 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       typename iterator_traits<_RandomAccessIterator>::difference_type
 	__trip_count = (__last - __first) >> 2;
 
+#ifdef STL_ENABLE_GPU
+      if(__trip_count > 32000){
+	return __gpu_find(__first,__last,__val);
+      }else{
+#endif
       for (; __trip_count > 0; --__trip_count)
 	{
 	  if (*__first == __val)
@@ -190,6 +226,9 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	default:
 	  return __last;
 	}
+#ifdef STL_ENABLE_GPU
+      }
+#endif
     }
 
   /// This is an overload used by find_if() for the RAI case.
