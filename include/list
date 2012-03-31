@@ -11,6 +11,10 @@
 #ifndef _LIBCPP_LIST
 #define _LIBCPP_LIST
 
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/sort.h>
+
 /*
     list synopsis
 
@@ -2092,7 +2096,36 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 list<_Tp, _Alloc>::sort(_Comp __comp)
 {
+  if(base::__sz() > 32000){
+    __gpu_sort(begin(), end(), base::__sz(), __comp);
+  }else{
     __sort(begin(), end(), base::__sz(), __comp);
+  }
+}
+
+template <class _Tp, class _Alloc>
+template <class _Comp>
+typename list<_Tp, _Alloc>::iterator
+list<_Tp, _Alloc>::__gpu_sort(iterator __f1, iterator __e2, size_type __n, _Comp& __comp)
+{
+  thrust::host_vector<_Tp> __host(base::__sz());
+  unsigned int __c = 0;
+  for(iterator __s = __f1; __s != __e2; __s++){
+    __host[__c] = *__s;
+  }
+
+  thrust::device_vector<_Tp> __device(base::__sz());
+  thrust::copy(__host.begin(),__host.end(),__device.begin());
+
+  // TODO:  Add comparator handling
+  thrust::sort(__device.begin(),__device.end());
+
+  __c = 0;
+  for(iterator __s = __f1; __s != __e2; __s++){
+    *__s = __host[__c];
+  }
+
+  return __f1;
 }
 
 template <class _Tp, class _Alloc>

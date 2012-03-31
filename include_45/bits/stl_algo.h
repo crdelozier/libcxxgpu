@@ -145,27 +145,62 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     }
 
 #ifdef STL_ENABLE_GPU
+
+  template<typename _Iterator, typename _Tp>
+  void __copy_to_gpu(_Iterator __first, _Iterator __last, thrust::device_vector<_Tp> & __device, size_t __total_size){
+    _Tp * __start = &(*__first);
+    _Tp * __end = &(*(__last-1)) + 1;
+
+    if(((char*)__end) - ((char*)__start) == __total_size * (sizeof(_Tp))){
+      // Memory is continuous, so we can do a direct copy
+      thrust::copy(__start,__end,__device.begin());
+    }else{
+      // Not provably continuous memory, so use iterators to copy
+      thrust::host_vector<_Tp> __host(__total_size);
+      unsigned long __idx = 0;
+      for(; __first != __last; ++__first){
+	__host[__idx] = *__first;
+	++__idx;
+      }
+      thrust::copy(__host.begin(),__host.end(),__device.begin());
+    }
+  }
+
+  template<typename _Iterator, typename _Tp>
+  void __copy_from_gpu(_Iterator __first, _Iterator __last, thrust::device_vector<_Tp> & __device, size_t __total_size){
+    _Tp * __start = &(*__first);
+    _Tp * __end = &(*(__last-1)) + 1;
+
+    if(((char*)__end) - ((char*)__start) == __total_size * (sizeof(_Tp))){
+      // Memory is continuous, so we can do a direct copy
+      thrust::copy(__device.begin(),__device.end(),__start);
+    }else{
+      // Not provably continuous memory, so use iterators to copy
+      thrust::host_vector<_Tp> __host(__total_size);
+      thrust::copy(__device.begin(),__device.end(),__host.begin());
+      unsigned long __idx = 0;
+      for(; __first != __last; ++__first){
+	*__first = __host[__idx];
+        ++__idx;
+      }
+    }
+  }
+
   template<typename _RandomAccessIterator, typename _Tp>
     _RandomAccessIterator
     __gpu_find(_RandomAccessIterator __first, _RandomAccessIterator __last,
 	   const _Tp& __val)
     {
-      static bool __cpy = true;
       unsigned long __total_size = (__last - __first);
       
       static thrust::device_vector<_Tp> __device(__total_size);
+      static bool __cpy = true;
       
       if(__cpy){
-	thrust::host_vector<_Tp> __host(__total_size);
-	unsigned long __c = 0;
-
-	for(_RandomAccessIterator __it = __first; __it != __last; ++__it){
-	  __host[__c] = *__it;
-	  ++__c;
-	}
-	thrust::copy(__host.begin(),__host.end(),__device.begin());
+	__copy_to_gpu(__first,__last,__device,__total_size);
 	__cpy = false;
       }
+
       typename thrust::device_vector<_Tp>::iterator __loc = 
 	thrust::find(__device.begin(),__device.end(),__val);
 
@@ -185,7 +220,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	__trip_count = (__last - __first) >> 2;
 
 #ifdef STL_ENABLE_GPU
-      if(__trip_count > 32000){
+      if(true){
 	return __gpu_find(__first,__last,__val);
       }else{
 #endif
@@ -5218,6 +5253,25 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 			 std::__lg(__last - __first) * 2, __comp);
     }
 
+#ifdef STL_ENABLE_GPU
+  template<typename _RandomAccessIterator>
+    inline void
+    __gpu_sort(_RandomAccessIterator __first, _RandomAccessIterator __last)
+    {
+      typedef typename iterator_traits<_RandomAccessIterator>::value_type
+	_ValueType;
+
+      unsigned long __total_size = (__last - __first);
+      
+      thrust::device_vector<_ValueType> __device(__total_size);
+      
+      __copy_to_gpu(__first,__last,__device,__total_size);
+
+      thrust::sort(__device.begin(),__device.end());
+
+      __copy_from_gpu(__first,__last,__device,__total_size); 
+    }
+#endif
 
   /**
    *  @brief Sort the elements of a sequence.
@@ -5248,9 +5302,17 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 
       if (__first != __last)
 	{
-	  std::__introsort_loop(__first, __last,
+#ifdef STL_ENABLE_GPU
+	  if(__last - __first > 32000){
+	    __gpu_sort(__first,__last);
+	  }else{
+#endif
+	    std::__introsort_loop(__first, __last,
 				std::__lg(__last - __first) * 2);
-	  std::__final_insertion_sort(__first, __last);
+	    std::__final_insertion_sort(__first, __last);
+#ifdef STL_ENABLE_GPU
+	  }
+#endif
 	}
     }
 
