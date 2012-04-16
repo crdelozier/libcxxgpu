@@ -144,72 +144,6 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       return __first;
     }
 
-#ifdef STL_ENABLE_GPU
-
-  template<typename _Iterator, typename _Tp>
-  void __copy_to_gpu(_Iterator __first, _Iterator __last, thrust::device_vector<_Tp> & __device, size_t __total_size){
-    _Tp * __start = &(*__first);
-    _Tp * __end = &(*(__last-1)) + 1;
-
-    if(((char*)__end) - ((char*)__start) == __total_size * (sizeof(_Tp))){
-      // Memory is continuous, so we can do a direct copy
-      thrust::copy(__start,__end,__device.begin());
-    }else{
-      // Not provably continuous memory, so use iterators to copy
-      thrust::host_vector<_Tp> __host(__total_size);
-      unsigned long __idx = 0;
-      for(; __first != __last; ++__first){
-	__host[__idx] = *__first;
-	++__idx;
-      }
-      thrust::copy(__host.begin(),__host.end(),__device.begin());
-    }
-  }
-
-  template<typename _Iterator, typename _Tp>
-  void __copy_from_gpu(_Iterator __first, _Iterator __last, thrust::device_vector<_Tp> & __device, size_t __total_size){
-    _Tp * __start = &(*__first);
-    _Tp * __end = &(*(__last-1)) + 1;
-
-    if(((char*)__end) - ((char*)__start) == __total_size * (sizeof(_Tp))){
-      // Memory is continuous, so we can do a direct copy
-      thrust::copy(__device.begin(),__device.end(),__start);
-    }else{
-      // Not provably continuous memory, so use iterators to copy
-      thrust::host_vector<_Tp> __host(__total_size);
-      thrust::copy(__device.begin(),__device.end(),__host.begin());
-      unsigned long __idx = 0;
-      for(; __first != __last; ++__first){
-	*__first = __host[__idx];
-        ++__idx;
-      }
-    }
-  }
-
-  template<typename _RandomAccessIterator, typename _Tp>
-    _RandomAccessIterator
-    __gpu_find(_RandomAccessIterator __first, _RandomAccessIterator __last,
-	   const _Tp& __val)
-    {
-      unsigned long __total_size = (__last - __first);
-      
-      static thrust::device_vector<_Tp> __device(__total_size);
-      static bool __cpy = true;
-      
-      if(__cpy){
-	__copy_to_gpu(__first,__last,__device,__total_size);
-	__cpy = false;
-      }
-
-      typename thrust::device_vector<_Tp>::iterator __loc = 
-	thrust::find(__device.begin(),__device.end(),__val);
-
-      unsigned long __dist = thrust::distance(__device.begin(),__loc);
-
-      return __first + __dist;
-    }
-#endif
-
   /// This is an overload used by find() for the RAI case.
   template<typename _RandomAccessIterator, typename _Tp>
     _RandomAccessIterator
@@ -220,7 +154,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	__trip_count = (__last - __first) >> 2;
 
 #ifdef STL_ENABLE_GPU
-      if(true){
+      if(false){
 	return __gpu_find(__first,__last,__val);
       }else{
 #endif
@@ -4758,9 +4692,15 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
             __typeof__(__unary_op(*__first))>)
       __glibcxx_requires_valid_range(__first, __last);
 
+#ifdef STL_ENABLE_GPU
+      if(__should_use_gpu(_CPU_3,__last - __first)){
+	__gpu_transform(__first,__last,__result,__unary_op);
+      }else{
+#endif
       for (; __first != __last; ++__first, ++__result)
 	*__result = __unary_op(*__first);
       return __result;
+STL_GPU_END
     }
 
   /**
@@ -5253,26 +5193,6 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 			 std::__lg(__last - __first) * 2, __comp);
     }
 
-#ifdef STL_ENABLE_GPU
-  template<typename _RandomAccessIterator>
-    inline void
-    __gpu_sort(_RandomAccessIterator __first, _RandomAccessIterator __last)
-    {
-      typedef typename iterator_traits<_RandomAccessIterator>::value_type
-	_ValueType;
-
-      unsigned long __total_size = (__last - __first);
-      
-      thrust::device_vector<_ValueType> __device(__total_size);
-      
-      __copy_to_gpu(__first,__last,__device,__total_size);
-
-      thrust::sort(__device.begin(),__device.end());
-
-      __copy_from_gpu(__first,__last,__device,__total_size); 
-    }
-#endif
-
   /**
    *  @brief Sort the elements of a sequence.
    *  @ingroup sorting_algorithms
@@ -5588,7 +5508,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
     _OutputIterator
     set_union(_InputIterator1 __first1, _InputIterator1 __last1,
 	      _InputIterator2 __first2, _InputIterator2 __last2,
-	      _OutputIterator __result)
+	      _OutputIterator __result, bool __no_copy)
     {
       typedef typename iterator_traits<_InputIterator1>::value_type
 	_ValueType1;
@@ -5606,6 +5526,12 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
       __glibcxx_function_requires(_LessThanOpConcept<_ValueType2, _ValueType1>)
       __glibcxx_requires_sorted_set(__first1, __last1, __first2);
       __glibcxx_requires_sorted_set(__first2, __last2, __first1);
+
+#ifdef STL_ENABLE_GPU
+      if(__should_use_gpu(_CPU_2,(__last1 - __first1) + (__last2 - __first2))){
+	return __gpu_set_union(__first1,__last1,__first2,__last2,__result,__no_copy);
+      }else{
+#endif
 
       while (__first1 != __last1 && __first2 != __last2)
 	{
@@ -5629,6 +5555,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 	}
       return std::copy(__first2, __last2, std::copy(__first1, __last1,
 						    __result));
+STL_GPU_END
     }
 
   /**
@@ -5722,7 +5649,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
     _OutputIterator
     set_intersection(_InputIterator1 __first1, _InputIterator1 __last1,
 		     _InputIterator2 __first2, _InputIterator2 __last2,
-		     _OutputIterator __result)
+		     _OutputIterator __result, bool __no_copy)
     {
       typedef typename iterator_traits<_InputIterator1>::value_type
 	_ValueType1;
@@ -5739,6 +5666,11 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
       __glibcxx_requires_sorted_set(__first1, __last1, __first2);
       __glibcxx_requires_sorted_set(__first2, __last2, __first1);
 
+#ifdef STL_ENABLE_GPU
+      if(__should_use_gpu(_CPU_2,min(__last1-__first1,__last2-__first2))){
+	return __gpu_set_intersection(__first1,__last1,__first2,__last2,__result,__no_copy);
+      }else{
+#endif
       while (__first1 != __last1 && __first2 != __last2)
 	if (*__first1 < *__first2)
 	  ++__first1;
@@ -5752,6 +5684,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 	    ++__result;
 	  }
       return __result;
+STL_GPU_END
     }
 
   /**
@@ -5837,7 +5770,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
     _OutputIterator
     set_difference(_InputIterator1 __first1, _InputIterator1 __last1,
 		   _InputIterator2 __first2, _InputIterator2 __last2,
-		   _OutputIterator __result)
+		   _OutputIterator __result, bool __no_copy)
     {
       typedef typename iterator_traits<_InputIterator1>::value_type
 	_ValueType1;
@@ -5854,6 +5787,11 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
       __glibcxx_requires_sorted_set(__first1, __last1, __first2);
       __glibcxx_requires_sorted_set(__first2, __last2, __first1);
 
+#ifdef STL_ENABLE_GPU
+      if(__should_use_gpu(_CPU_2,__last1 - __first1)){
+	return __gpu_set_difference(__first1,__last1,__first2,__last2,__result,__no_copy);
+      }else{
+#endif
       while (__first1 != __last1 && __first2 != __last2)
 	if (*__first1 < *__first2)
 	  {
@@ -5869,6 +5807,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 	    ++__first2;
 	  }
       return std::copy(__first1, __last1, __result);
+STL_GPU_END
     }
 
   /**
@@ -5956,7 +5895,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
     _OutputIterator
     set_symmetric_difference(_InputIterator1 __first1, _InputIterator1 __last1,
 			     _InputIterator2 __first2, _InputIterator2 __last2,
-			     _OutputIterator __result)
+			     _OutputIterator __result, bool __no_copy)
     {
       typedef typename iterator_traits<_InputIterator1>::value_type
 	_ValueType1;
@@ -5975,6 +5914,12 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
       __glibcxx_requires_sorted_set(__first1, __last1, __first2);
       __glibcxx_requires_sorted_set(__first2, __last2, __first1);
 
+#ifdef STL_ENABLE_GPU
+      if(__should_use_gpu(_CPU_2,max(__last1-__first1,__last2-__first2))){
+	return __gpu_set_symmetric_difference(__first1,__last1,
+					      __first2,__last2,__result,__no_copy);
+      }else{
+#endif
       while (__first1 != __last1 && __first2 != __last2)
 	if (*__first1 < *__first2)
 	  {
@@ -5995,6 +5940,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 	  }
       return std::copy(__first2, __last2, std::copy(__first1,
 						    __last1, __result));
+STL_GPU_END
     }
 
   /**
@@ -6084,6 +6030,11 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 	    typename iterator_traits<_ForwardIterator>::value_type>)
       __glibcxx_requires_valid_range(__first, __last);
 
+#ifdef STL_ENABLE_GPU
+      if(true){
+	return __gpu_min_element(__first,__last);
+      }else{
+#endif
       if (__first == __last)
 	return __first;
       _ForwardIterator __result = __first;
@@ -6091,6 +6042,9 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 	if (*__first < *__result)
 	  __result = __first;
       return __result;
+#ifdef STL_ENABLE_GPU
+      }
+#endif
     }
 
   /**
@@ -6140,6 +6094,11 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 	    typename iterator_traits<_ForwardIterator>::value_type>)
       __glibcxx_requires_valid_range(__first, __last);
 
+#ifdef STL_ENABLE_GPU
+      if(__should_use_gpu(_CPU_2,__last-__first)){
+	return __gpu_max_element(__first,__last);
+      }else{
+#endif
       if (__first == __last)
 	return __first;
       _ForwardIterator __result = __first;
@@ -6147,6 +6106,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 	if (*__result < *__first)
 	  __result = __first;
       return __result;
+STL_GPU_END
     }
 
   /**

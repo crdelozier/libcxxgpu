@@ -725,7 +725,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 
   template<typename _IIter1, typename _IIter2, typename _OIter>
     _OIter 
-    set_difference(_IIter1, _IIter1, _IIter2, _IIter2, _OIter);
+    set_difference(_IIter1, _IIter1, _IIter2, _IIter2, _OIter, bool __no_copy = false);
 
   template<typename _IIter1, typename _IIter2, typename _OIter, 
 	   typename _Compare>
@@ -734,7 +734,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 
   template<typename _IIter1, typename _IIter2, typename _OIter>
     _OIter 
-    set_intersection(_IIter1, _IIter1, _IIter2, _IIter2, _OIter);
+    set_intersection(_IIter1, _IIter1, _IIter2, _IIter2, _OIter, bool __no_copy = false);
 
   template<typename _IIter1, typename _IIter2, typename _OIter,
 	   typename _Compare>
@@ -743,7 +743,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 
   template<typename _IIter1, typename _IIter2, typename _OIter>
     _OIter
-    set_symmetric_difference(_IIter1, _IIter1, _IIter2, _IIter2, _OIter);
+    set_symmetric_difference(_IIter1, _IIter1, _IIter2, _IIter2, _OIter, bool __no_copy = false);
 
   template<typename _IIter1, typename _IIter2, typename _OIter, 
 	   typename _Compare>
@@ -753,7 +753,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
 
   template<typename _IIter1, typename _IIter2, typename _OIter>
     _OIter 
-    set_union(_IIter1, _IIter1, _IIter2, _IIter2, _OIter);
+    set_union(_IIter1, _IIter1, _IIter2, _IIter2, _OIter, bool __no_copy = false);
 
   template<typename _IIter1, typename _IIter2, typename _OIter,
 	   typename _Compare>

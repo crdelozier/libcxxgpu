@@ -1,0 +1,27 @@
+#ifndef _GPU_ALGO
+#define _GPU_ALGO 1
+
+  template<typename _RandomAccessIterator, typename _Tp>
+    _RandomAccessIterator
+    __gpu_find(_RandomAccessIterator __first, _RandomAccessIterator __last,
+	   const _Tp& __val)
+    {
+      unsigned long __total_size = (__last - __first);
+      
+      static thrust::device_vector<_Tp> __device(__total_size);
+      static bool __cpy = true;
+      
+      if(__cpy){
+	__copy_to_gpu(__first,__last,__device,__total_size);
+	__cpy = false;
+      }
+
+      typename thrust::device_vector<_Tp>::iterator __loc = 
+	thrust::find(__device.begin(),__device.end(),__val);
+
+      unsigned long __dist = thrust::distance(__device.begin(),__loc);
+
+      return __first + __dist;
+    }
+
+#endif
