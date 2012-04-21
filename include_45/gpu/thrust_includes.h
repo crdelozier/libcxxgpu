@@ -13,5 +13,6 @@
 #include <thrust/find.h>
 #include <thrust/extrema.h>
 #include <thrust/set_operations.h>
+#include <thrust/for_each.h>
 
 #endif

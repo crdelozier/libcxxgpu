@@ -59,7 +59,7 @@
 
     if(((char*)__end) - ((char*)__start) == __total_size * (sizeof(_Tp))){
       // Memory is continuous, so we can do a direct copy
-      thrust::copy(__device.begin(),__device.end(),__start);
+       thrust::copy(__device.begin(),__device.end(),__start);
     }else{
       // Not provably continuous memory, so use iterators to copy
       thrust::host_vector<_Tp> __host(__total_size);

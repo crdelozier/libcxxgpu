@@ -1,6 +1,30 @@
 #ifndef _GPU_ALGO
 #define _GPU_ALGO 1
 
+  template<typename _InputIterator, typename _OutputIterator,
+	   typename _UnaryOperation>
+    _OutputIterator
+    __gpu_transform(_InputIterator __first, _InputIterator __last,
+	      _OutputIterator __result, _UnaryOperation __unary_op)
+    {
+      typedef typename std::iterator_traits<_InputIterator>::value_type
+	_ValueType;
+
+      unsigned long __size = __last - __first;
+
+      thrust::device_vector<_ValueType> __device(__size);
+      thrust::device_vector<_ValueType> __output(__size);
+
+      __copy_to_gpu(__first,__last,__device,__size);
+ 
+      thrust::transform(__device.begin(),__device.end(),__output.begin(),__unary_op);
+
+      __copy_from_gpu(__result,__result+__size,__output,__size);
+
+      return __result;
+    }
+
+
   template<typename _RandomAccessIterator, typename _Tp>
     _RandomAccessIterator
     __gpu_find(_RandomAccessIterator __first, _RandomAccessIterator __last,
