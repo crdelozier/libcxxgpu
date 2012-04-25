@@ -8,7 +8,7 @@
 #include <cassert>
 
 #define ITERATIONS 5
-#define OPERATION 4
+#define OPERATION 2
 
 using namespace std;
 
@@ -57,9 +57,6 @@ int main(int argc, char ** argv){
         
         clock_gettime(CLOCK_REALTIME,&stop);
         total_time += ((stop.tv_sec-start.tv_sec)*1000000000) + (stop.tv_nsec - start.tv_nsec);
-        for(vector<DATA_TYPE>::iterator it = set1.begin(), e = set1.begin() + 1; it != e; ++it){
-	  assert(find(output.begin(),output.end(),*it) != output.end());
-	}
 	break;
       case 2:
         clock_gettime(CLOCK_REALTIME,&start);
@@ -77,17 +74,6 @@ int main(int argc, char ** argv){
 	set_difference(set1.begin(),set1.end(),
 		       set2.begin(),set2.end(),
 		       output.begin());
-        clock_gettime(CLOCK_REALTIME,&stop);
-        total_time += ((stop.tv_sec-start.tv_sec)*1000000000) + (stop.tv_nsec - start.tv_nsec);
-        for(vector<DATA_TYPE>::iterator it = output.begin(), e = output.end(); it != e; ++it){
-          *it = set1[0];
-	}
-	break;
-      case 4:
-        clock_gettime(CLOCK_REALTIME,&start);
-        set_symmetric_difference(set1.begin(),set1.end(),
-				 set2.begin(),set2.end(),
-				 output.begin());
         clock_gettime(CLOCK_REALTIME,&stop);
         total_time += ((stop.tv_sec-start.tv_sec)*1000000000) + (stop.tv_nsec - start.tv_nsec);
         for(vector<DATA_TYPE>::iterator it = output.begin(), e = output.end(); it != e; ++it){

@@ -1,1 +1,8 @@
 All microbenchmarks take the input data size as a single parameter
+
+list_sort - Performs sort algorithm on lists (build-in method to list container)
+search - Performs find on an input vector
+vector_sort - Performs sort algorithm on a vector
+function - Calls transform with a user defined functor
+set - Executes set_union, set_intersection, and set_difference
+reductions - Computes min and max element on a vector

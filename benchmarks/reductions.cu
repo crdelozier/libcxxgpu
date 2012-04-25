@@ -30,7 +30,6 @@ int main(int argc, char ** argv){
   }
 
   for(int i = 0; i < ITERATIONS; i++){
-
     for(int c = N; c > 0; c--){
       int_vector.push_back((DATA_TYPE)(rand() % 500000));
     }

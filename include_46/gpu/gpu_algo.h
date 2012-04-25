@@ -30,15 +30,11 @@
     __gpu_find(_RandomAccessIterator __first, _RandomAccessIterator __last,
 	   const _Tp& __val)
     {
-      static bool __first_time = true;
       unsigned long __total_size = (__last - __first);
-
+      
       thrust::device_vector<_Tp> __device(__total_size);
       
-      if(__first_time){
-	__copy_to_gpu(__first,__last,__device,__total_size);
-	__first_time = false;
-      }
+      __copy_to_gpu(__first,__last,__device,__total_size);
 
       typename thrust::device_vector<_Tp>::iterator __loc = 
 	thrust::find(__device.begin(),__device.end(),__val);
@@ -228,6 +224,8 @@
     {
       typedef typename std::iterator_traits<_RandomAccessIterator>::value_type
 	_ValueType;
+
+      //      printf("GPU Sorting\n");
 
       unsigned long __total_size = (__last - __first);
       

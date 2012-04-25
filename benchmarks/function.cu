@@ -22,12 +22,6 @@ struct Foo{
   __host__ __device__ DATA_TYPE operator() (DATA_TYPE i){
     for(int c = 0; c < M; c++){
       i += 5;
-      //i /= 3;
-      //i += 2;
-      //i *= 11;
-      //i /= 7;
-      //i *= 10;
-      //i += 2;
     }
 
     return i; 
