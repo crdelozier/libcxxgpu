@@ -1,14 +1,14 @@
 CXX := nvcc
 CXXFLAGS := 
-LDFLAGS := -lrt
+LDFLAGS := -lrt -DSTL_ENABLE_GPU -O3 -DGT9600
 INCLUDE := -I../include_45/ -I../
 
-.PHONY all: list_sort search vector_ops vector_sort
+.PHONY all: list_sort search vector_ops vector_sort function set reductions
 
 clean:
-	rm -f search list_sort
+	rm -f list_sort search vector_ops vector_sort function set reductions test
 
-set:
+function:
 	${CXX} ${INCLUDE} ${CXXFLAGS} ${LDFLAGS} -o function function.cu
 
 search:

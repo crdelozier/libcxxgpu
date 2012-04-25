@@ -1,1 +1,1 @@
-WARNING:  libcxx does not support streams, such as cout, on linux.  Benchmarks and unit tests must only use printf for output for this reason.
+All microbenchmarks take the input data size as a single parameter

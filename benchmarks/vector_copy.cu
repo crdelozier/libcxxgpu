@@ -38,14 +38,14 @@ int main(int argc, char ** argv){
     size_t __total_size = N;
     thrust::device_vector<DATA_TYPE> __device(__total_size);
 
+    clock_gettime(CLOCK_REALTIME,&start);
 
     thrust::copy(int_list.begin(),int_list.end(),__device.begin());
 
-    clock_gettime(CLOCK_REALTIME,&start);
+    clock_gettime(CLOCK_REALTIME,&stop);
  
     thrust::copy(__device.begin(),__device.end(),int_list.begin()); 
 
-    clock_gettime(CLOCK_REALTIME,&stop);
     total_time += ((stop.tv_sec-start.tv_sec)*1000000000) + (stop.tv_nsec - start.tv_nsec);
 
     int_list.clear();

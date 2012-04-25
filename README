@@ -1,1 +1,18 @@
+Microbenchmarks have been compiled and tested 
+with gcc versions 4.5.1 and 4.6.1.  Any other versions
+are not guaranteed to work due to the coupling of 
+gcc versions with the libstdc++ STL implementation.
 
+benchmarks/ contains a set of microbenchmarks that were used to evaluate the 
+effectiveness of GPU acceleration for STL algorithms.
+
+gpu/ contains the libcxxgpu headers that are common to the
+implementation of GPU acceleration in each version of the STL.
+
+include_45/ contains the GPU accelerated version of libstdc++ that matches
+the gcc 4.5.1 compiler.
+
+include_46/ contains the GPU accelerated version of libstdc++ that matches
+the gcc 4.6.1 compiler.
+
+thrust/ contains the unaltered thrust library

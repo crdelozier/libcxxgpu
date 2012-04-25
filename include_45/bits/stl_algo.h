@@ -154,6 +154,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	__trip_count = (__last - __first) >> 2;
 
 #ifdef STL_ENABLE_GPU
+      // Never use GPU for find
       if(false){
 	return __gpu_find(__first,__last,__val);
       }else{
@@ -4693,7 +4694,9 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
       __glibcxx_requires_valid_range(__first, __last);
 
 #ifdef STL_ENABLE_GPU
-      if(__should_use_gpu(_CPU_3,__last - __first)){
+      // Need compiler support to approximate the number of instructions
+      // in the functor
+      if(__should_use_gpu(20,__last - __first,sizeof(__typeof__(*__first)))){
 	__gpu_transform(__first,__last,__result,__unary_op);
       }else{
 #endif
@@ -5223,7 +5226,7 @@ STL_GPU_END
       if (__first != __last)
 	{
 #ifdef STL_ENABLE_GPU
-	  if(__last - __first > 32000){
+	  if(__should_use_gpu(16,__last-__first,4)){
 	    __gpu_sort(__first,__last);
 	  }else{
 #endif
@@ -5528,7 +5531,8 @@ STL_GPU_END
       __glibcxx_requires_sorted_set(__first2, __last2, __first1);
 
 #ifdef STL_ENABLE_GPU
-      if(__should_use_gpu(_CPU_2,(__last1 - __first1) + (__last2 - __first2))){
+      // Should never use GPU because method is not complex enough
+      if(__should_use_gpu(1,(__last1 - __first1) + (__last2 - __first2))){
 	return __gpu_set_union(__first1,__last1,__first2,__last2,__result,__no_copy);
       }else{
 #endif
@@ -5667,7 +5671,7 @@ STL_GPU_END
       __glibcxx_requires_sorted_set(__first2, __last2, __first1);
 
 #ifdef STL_ENABLE_GPU
-      if(__should_use_gpu(_CPU_2,min(__last1-__first1,__last2-__first2))){
+      if(__should_use_gpu(1,min(__last1-__first1,__last2-__first2))){
 	return __gpu_set_intersection(__first1,__last1,__first2,__last2,__result,__no_copy);
       }else{
 #endif
@@ -5788,7 +5792,7 @@ STL_GPU_END
       __glibcxx_requires_sorted_set(__first2, __last2, __first1);
 
 #ifdef STL_ENABLE_GPU
-      if(__should_use_gpu(_CPU_2,__last1 - __first1)){
+      if(__should_use_gpu(1,__last1 - __first1)){
 	return __gpu_set_difference(__first1,__last1,__first2,__last2,__result,__no_copy);
       }else{
 #endif
@@ -5915,7 +5919,7 @@ STL_GPU_END
       __glibcxx_requires_sorted_set(__first2, __last2, __first1);
 
 #ifdef STL_ENABLE_GPU
-      if(__should_use_gpu(_CPU_2,max(__last1-__first1,__last2-__first2))){
+      if(__should_use_gpu(1,max(__last1-__first1,__last2-__first2))){
 	return __gpu_set_symmetric_difference(__first1,__last1,
 					      __first2,__last2,__result,__no_copy);
       }else{
@@ -6031,7 +6035,7 @@ STL_GPU_END
       __glibcxx_requires_valid_range(__first, __last);
 
 #ifdef STL_ENABLE_GPU
-      if(true){
+      if(__should_use_gpu(1,__last-__first)){
 	return __gpu_min_element(__first,__last);
       }else{
 #endif
@@ -6095,7 +6099,7 @@ STL_GPU_END
       __glibcxx_requires_valid_range(__first, __last);
 
 #ifdef STL_ENABLE_GPU
-      if(__should_use_gpu(_CPU_2,__last-__first)){
+      if(__should_use_gpu(1,__last-__first)){
 	return __gpu_max_element(__first,__last);
       }else{
 #endif

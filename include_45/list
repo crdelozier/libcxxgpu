@@ -56,9 +56,10 @@
 #ifndef _GLIBCXX_LIST
 #define _GLIBCXX_LIST 1
 
-#include "thrust/host_vector.h"
-#include "thrust/device_vector.h"
-#include "thrust/sort.h"
+#ifdef STL_ENABLE_GPU
+#include <gpu/thrust_includes.h>
+#include <gpu/gpu_util.h>
+#endif
 
 #pragma GCC system_header
 

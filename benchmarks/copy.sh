@@ -1,4 +1,4 @@
-nvcc -I../include_46/ -I../ -lrt -o test vector_copy.cu -O3 -DDATA_TYPE=float
+nvcc -I../include_45/ -I../ -lrt -o test list_copy.cu -O3 -DDATA_TYPE=float
 ./test 32000
 ./test 32000
 ./test 64000
@@ -12,7 +12,7 @@ nvcc -I../include_46/ -I../ -lrt -o test vector_copy.cu -O3 -DDATA_TYPE=float
 ./test 16000000
 ./test 32000000
 
-nvcc -I../include_46/ -I../ -lrt -o test vector_copy.cu -O3 -DDATA_TYPE=long
+nvcc -I../include_45/ -I../ -lrt -o test list_copy.cu -O3 -DDATA_TYPE=long
 ./test 32000
 ./test 32000
 ./test 64000

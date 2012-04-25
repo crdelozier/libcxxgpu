@@ -40,6 +40,7 @@ int main(int argc, char ** argv){
     size_t __total_size = N;
     thrust::device_vector<DATA_TYPE> __device(__total_size);
 
+    clock_gettime(CLOCK_REALTIME,&start);
     // Not provably continuous memory, so use iterators to copy                                                                                                                                                
     thrust::host_vector<DATA_TYPE> __host(__total_size);
     unsigned long __idx = 0;
@@ -49,8 +50,8 @@ int main(int argc, char ** argv){
     }
     thrust::copy(__host.begin(),__host.end(),__device.begin());
 
-    clock_gettime(CLOCK_REALTIME,&start);
  
+    clock_gettime(CLOCK_REALTIME,&stop);
     thrust::copy(__device.begin(),__device.end(),__host.begin());
     __idx = 0;
     for(; __first != __last; ++__first){
@@ -58,7 +59,6 @@ int main(int argc, char ** argv){
       ++__idx;
     }
   
-    clock_gettime(CLOCK_REALTIME,&stop);
 
     total_time += ((stop.tv_sec-start.tv_sec)*1000000000) + (stop.tv_nsec - start.tv_nsec);
 

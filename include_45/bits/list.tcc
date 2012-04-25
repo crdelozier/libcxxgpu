@@ -329,7 +329,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_D)
     sort()
     {
 #ifdef STL_ENABLE_GPU
-      if(size() < 128000){
+      if(__should_use_gpu(300,size(),sizeof(_Tp))){
 #endif
       // Do nothing if the list has length 0 or 1.
       if (this->_M_impl._M_node._M_next != &this->_M_impl._M_node
